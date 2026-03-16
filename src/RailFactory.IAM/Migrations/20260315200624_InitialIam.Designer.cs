@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using RailFactory.IAM.Infrastructure;
+using RailFactory.IAM.Infrastructure.Persistence;
 
 #nullable disable
 
@@ -63,7 +63,7 @@ namespace RailFactory.IAM.Migrations
                     b.ToTable("users", "iam_schema");
                 });
 
-            modelBuilder.Entity("RailFactory.IAM.Domain.UserAuditEntry", b =>
+            modelBuilder.Entity("RailFactory.IAM.Domain.Audit.UserAuditEntry", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -95,7 +95,7 @@ namespace RailFactory.IAM.Migrations
                     b.ToTable("user_audit_entries", "iam_schema");
                 });
 
-            modelBuilder.Entity("RailFactory.IAM.Domain.UserTenantRole", b =>
+            modelBuilder.Entity("RailFactory.IAM.Domain.User.UserTenantRole", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()

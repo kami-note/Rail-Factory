@@ -25,9 +25,6 @@ public sealed class DefaultTenantResolver : ITenantResolver
             return null;
 
         var connectionString = await _connectionProvider.GetConnectionStringAsync(tenantId, cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(connectionString))
-            return null;
-
         return new TenantContext { TenantId = tenantId.Trim(), ConnectionString = connectionString };
     }
 }

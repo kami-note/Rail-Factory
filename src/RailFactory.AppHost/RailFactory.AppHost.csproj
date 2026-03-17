@@ -15,4 +15,9 @@
     <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RailFactory.Gateway\RailFactory.Gateway.csproj" />
+    <ProjectReference Include="..\RailFactory.Iam\RailFactory.Iam.Api\RailFactory.Iam.Api.csproj" />
+  </ItemGroup>
+
 </Project>

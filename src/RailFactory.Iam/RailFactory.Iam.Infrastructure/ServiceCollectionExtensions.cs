@@ -1,0 +1,35 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using RailFactory.Iam.Application.Ports;
+using RailFactory.Iam.Application.Services;
+using RailFactory.Iam.Infrastructure.Google;
+using RailFactory.Iam.Infrastructure.Persistence;
+using RailFactory.Iam.Infrastructure.Persistence.Outbox;
+using RailFactory.Iam.Infrastructure.Persistence.Repositories;
+
+namespace RailFactory.Iam.Infrastructure;
+
+public static class ServiceCollectionExtensions
+{
+    /// <summary>
+    /// Registers IAM infrastructure: DbContext, repositories, unit of work, outbox, Google auth.
+    /// </summary>
+    public static IServiceCollection AddIamInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("iamdb")
+            ?? throw new InvalidOperationException("Connection string 'iamdb' is not configured.");
+
+        services.AddDbContext<IamDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IOutboxWriter, OutboxWriter>();
+
+        services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
+        services.AddSingleton<IGoogleAuthProvider, GoogleAuthProvider>();
+
+        return services;
+    }
+}

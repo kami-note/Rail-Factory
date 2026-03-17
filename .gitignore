@@ -49,6 +49,9 @@ packages/
 # Match directory name bin/obj with any path separator (e.g. bin\ on Windows)
 **/bin
 **/obj
+# Paths with backslash (e.g. bin\Debug from Windows or mixed path separators)
+**/bin\\*
+**/obj\\*
 
 # User secrets
 secrets.json
@@ -79,3 +82,4 @@ Desktop.ini
 # Local env (copy from env.example; do not commit secrets)
 .env
 .env.local
+leia.txt

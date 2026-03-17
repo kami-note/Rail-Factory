@@ -67,7 +67,7 @@ Este documento detalha o ciclo de vida completo do projeto, desde a concepção 
 - [ ] **[TECH]** Aplicar Outbox Pattern em todos os serviços com mensageria.
 - [ ] **[TECH]** Configurar Health Checks e Observabilidade (Grafana/Seq).
 - [ ] **[DOC]** Redigir o Relatório Técnico Final (Release Notes) e Manual do Usuário.
-- [ ] **[DEPLOY]** Preparar `docker-compose.yaml` para ambiente de Homologação.
+- [ ] **[DEPLOY]** Preparar configuração de deploy baseada no Aspire AppHost para ambiente de Homologação.
 
 ---
 

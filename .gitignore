@@ -44,6 +44,11 @@ artifacts/
 *.nuget.targets
 packages/
 .nuget/
+**/bin/
+**/obj/
+# Match directory name bin/obj with any path separator (e.g. bin\ on Windows)
+**/bin
+**/obj
 
 # User secrets
 secrets.json
@@ -70,3 +75,7 @@ Desktop.ini
 
 # Aspire / run
 *.runtimeconfig.json
+
+# Local env (copy from env.example; do not commit secrets)
+.env
+.env.local

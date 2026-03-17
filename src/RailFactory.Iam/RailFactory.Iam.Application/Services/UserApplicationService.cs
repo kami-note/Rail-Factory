@@ -4,6 +4,7 @@ using RailFactory.Iam.Application.DTOs;
 using RailFactory.Iam.Application.Ports;
 using RailFactory.Iam.Domain.Entities;
 using RailFactory.Iam.Domain.Events;
+using RailFactory.Iam.Domain.Exceptions;
 
 namespace RailFactory.Iam.Application.Services;
 
@@ -45,7 +46,7 @@ public sealed class UserApplicationService : IUserApplicationService
         if (existing != null)
         {
             if (existing.Status == UserStatus.Expelled)
-                throw new InvalidOperationException("This account has been expelled.");
+                throw new UserExpelledException();
             existing.Update(googleUser.Name, googleUser.Picture, now);
             await WriteDomainEventsToOutboxAsync(existing, cancellationToken).ConfigureAwait(false);
             existing.ClearDomainEvents();
@@ -72,7 +73,7 @@ public sealed class UserApplicationService : IUserApplicationService
     public async Task ExpelAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException("User not found.");
+            ?? throw new UserNotFoundException();
         user.Expel(DateTime.UtcNow);
         await WriteDomainEventsToOutboxAsync(user, cancellationToken).ConfigureAwait(false);
         user.ClearDomainEvents();
@@ -83,7 +84,7 @@ public sealed class UserApplicationService : IUserApplicationService
     public async Task<UserDto> UpdateProfileAsync(Guid userId, string? displayName, string? pictureUrl, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken).ConfigureAwait(false)
-            ?? throw new InvalidOperationException("User not found.");
+            ?? throw new UserNotFoundException();
         user.Update(displayName, pictureUrl, DateTime.UtcNow);
         await WriteDomainEventsToOutboxAsync(user, cancellationToken).ConfigureAwait(false);
         user.ClearDomainEvents();

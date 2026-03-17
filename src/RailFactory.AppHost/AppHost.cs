@@ -28,6 +28,8 @@ var rabbitmq = builder.AddRabbitMQ("rabbitmq");
 
 var googleClientId = builder.AddParameter("GoogleClientId", secret: true);
 var googleClientSecret = builder.AddParameter("GoogleClientSecret", secret: true);
+var googleRedirectUri = builder.AddParameter("GoogleRedirectUri");
+var googleFrontendRedirectUri = builder.AddParameter("GoogleFrontendRedirectUri");
 
 // -----------------------------------------------------------------------------
 // Backend services
@@ -35,10 +37,11 @@ var googleClientSecret = builder.AddParameter("GoogleClientSecret", secret: true
 
 var iam = builder.AddProject<Projects.RailFactory_Iam_Api>("identity-access-management")
     .WithReference(iamDb)
+    .WithReference(redis)
     .WithEnvironment("Google__ClientId", googleClientId)
     .WithEnvironment("Google__ClientSecret", googleClientSecret)
-    .WithEnvironment("Google__RedirectUri", "https://apparent-driving-horse.ngrok-free.app/auth/google/callback")
-    .WithEnvironment("Google__FrontendRedirectUri", "https://apparent-driving-horse.ngrok-free.app/auth/callback")
+    .WithEnvironment("Google__RedirectUri", googleRedirectUri)
+    .WithEnvironment("Google__FrontendRedirectUri", googleFrontendRedirectUri)
     .WaitFor(iamDb);
 
 // -----------------------------------------------------------------------------

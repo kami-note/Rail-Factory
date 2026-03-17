@@ -1,5 +1,5 @@
+using System.Net;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.EntityFrameworkCore;
 using RailFactory.Iam.Api;
 using RailFactory.Iam.Application;
 using RailFactory.Iam.Infrastructure;
@@ -8,17 +8,24 @@ using RailFactory.Iam.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.AddRedisClient("redis");
 
-// Infrastructure Configuration
+// Forwarded Headers Configuration
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
+    options.KnownProxies.Add(IPAddress.Loopback);
+    var gatewayIp = builder.Configuration["Gateway:IpAddress"];
+    if (!string.IsNullOrEmpty(gatewayIp) && IPAddress.TryParse(gatewayIp, out var address))
+    {
+        options.KnownProxies.Add(address);
+    }
 });
 
-builder.Services.AddMemoryCache();
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddHttpClient();
+
+// Hexagonal Architecture: Register Application and Infrastructure layers
 builder.Services.AddIamApplication();
 builder.Services.AddIamInfrastructure(builder.Configuration);
 
@@ -36,6 +43,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddHostedService<MigrationHostedService>();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -47,33 +56,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "IAM API v1"));
 }
 
-// Database Migrations
-await ApplyMigrationsAsync(app);
+// Migrations run in background under a Redis distributed lock (see MigrationHostedService); startup and health probes are not blocked.
 
-// --- Register Endpoints ---
+// Auth Middlewares
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Register Endpoints
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
 
 app.Run();
-
-async Task ApplyMigrationsAsync(WebApplication app)
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<IamDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Migration");
-    const int maxRetries = 5;
-    for (var i = 0; i < maxRetries; i++)
-    {
-        try
-        {
-            await db.Database.MigrateAsync().ConfigureAwait(false);
-            break;
-        }
-        catch (Exception ex)
-        {
-            if (i == maxRetries - 1) throw;
-            logger.LogWarning(ex, "Migration attempt {Attempt}/{Max} failed, retrying in 2s...", i + 1, maxRetries);
-            await Task.Delay(2000).ConfigureAwait(false);
-        }
-    }
-}

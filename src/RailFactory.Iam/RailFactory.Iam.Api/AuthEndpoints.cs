@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using RailFactory.Iam.Application.Services;
 using RailFactory.Iam.Infrastructure.Google;
 using RailFactory.Iam.Application.Ports;
+using RailFactory.Iam.Domain.Exceptions;
 
 namespace RailFactory.Iam.Api;
 
@@ -16,14 +16,15 @@ public static class AuthEndpoints
         var group = app.MapGroup("/auth");
 
         // Redirect flow: GET /auth/google -> Google -> GET /auth/google/callback
-        group.MapGet("/google", (IGoogleAuthProvider googleAuth, IOptions<GoogleAuthOptions> googleOptions, IMemoryCache cache) =>
+        group.MapGet("/google", async (IGoogleAuthProvider googleAuth, IOptions<GoogleAuthOptions> googleOptions, IOAuthStateStore stateStore) =>
         {
             var opts = googleOptions.Value;
             if (string.IsNullOrEmpty(opts.ClientId) || string.IsNullOrEmpty(opts.RedirectUri))
                 return Results.BadRequest("Google OAuth is not configured (ClientId, RedirectUri).");
 
             var state = Guid.NewGuid().ToString("N");
-            cache.Set("oauth_state:" + state, true, TimeSpan.FromMinutes(5));
+            var nonce = Guid.NewGuid().ToString("N");
+            await stateStore.SaveStateAsync(state, nonce, TimeSpan.FromMinutes(5));
 
             var url = googleAuth.BuildAuthorizationUrl(opts.RedirectUri, state);
             return Results.Redirect(url);
@@ -35,7 +36,7 @@ public static class AuthEndpoints
             IGoogleAuthProvider googleAuth,
             IUserApplicationService userService,
             IOptions<GoogleAuthOptions> googleOptions,
-            IMemoryCache cache,
+            IOAuthStateStore stateStore,
             CancellationToken ct) =>
         {
             var opts = googleOptions.Value;
@@ -45,10 +46,9 @@ public static class AuthEndpoints
             if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(state))
                 return Results.Redirect(opts.FrontendRedirectUri + "?error=missing_code_or_state");
 
-            var stateKey = "oauth_state:" + state;
-            if (cache.Get(stateKey) is null)
+            var storedNonce = await stateStore.GetAndRemoveStateAsync(state, ct);
+            if (string.IsNullOrEmpty(storedNonce))
                 return Results.Redirect(opts.FrontendRedirectUri + "?error=invalid_state");
-            cache.Remove(stateKey);
 
             var idToken = await googleAuth.ExchangeCodeForIdTokenAsync(code, opts.RedirectUri, ct).ConfigureAwait(false);
             if (string.IsNullOrEmpty(idToken))
@@ -62,7 +62,7 @@ public static class AuthEndpoints
             {
                 return Results.Redirect(opts.FrontendRedirectUri + "?error=unauthorized");
             }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("expelled"))
+            catch (UserExpelledException)
             {
                 return Results.Redirect(opts.FrontendRedirectUri + "?error=expelled");
             }
@@ -71,7 +71,7 @@ public static class AuthEndpoints
             return Results.Redirect(opts.FrontendRedirectUri + "#" + fragment);
         });
 
-        app.MapPost("/api/auth/google", async ([FromBody] GoogleLoginRequest request, IUserApplicationService userService, CancellationToken ct) =>
+        group.MapPost("/google", async ([FromBody] GoogleLoginRequest request, IUserApplicationService userService, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(request.IdToken))
                 return Results.BadRequest("IdToken is required.");
@@ -84,7 +84,7 @@ public static class AuthEndpoints
             {
                 return Results.Unauthorized();
             }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("expelled"))
+            catch (UserExpelledException)
             {
                 return Results.Json(new { error = "Account has been expelled." }, statusCode: 403);
             }

@@ -6,13 +6,16 @@ var builder = DistributedApplication.CreateBuilder(args);
 // Infrastructure (containers)
 // -----------------------------------------------------------------------------
 
-var postgres = builder.AddPostgres("postgres").WithPgAdmin();
+var postgres = builder.AddPostgres("postgres")
+    .WithDataVolume()
+    .WithPgAdmin();
 postgres.AddDatabase("postgresdb");
 
 var iamDb = postgres.AddDatabase("iamdb");
 
 #pragma warning disable ASPIRECERTIFICATES001 // Redis: plain TCP for health checks; image pinned to 7
 var redis = builder.AddRedis("redis")
+    .WithDataVolume()
     .WithoutHttpsCertificate()
     .WithImage("redis", "7-alpine");
 #pragma warning restore ASPIRECERTIFICATES001
@@ -34,8 +37,8 @@ var iam = builder.AddProject<Projects.RailFactory_Iam_Api>("identity-access-mana
     .WithReference(iamDb)
     .WithEnvironment("Google__ClientId", googleClientId)
     .WithEnvironment("Google__ClientSecret", googleClientSecret)
-    .WithEnvironment("Google__RedirectUri", "https://localhost:5001/auth/google/callback")
-    .WithEnvironment("Google__FrontendRedirectUri", "https://localhost:3000/auth/callback")
+    .WithEnvironment("Google__RedirectUri", "https://apparent-driving-horse.ngrok-free.app/auth/google/callback")
+    .WithEnvironment("Google__FrontendRedirectUri", "https://apparent-driving-horse.ngrok-free.app/auth/callback")
     .WaitFor(iamDb);
 
 // -----------------------------------------------------------------------------

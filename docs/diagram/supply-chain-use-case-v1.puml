@@ -1,0 +1,27 @@
+@startuml Supply-Chain-Use-Case
+left to right direction
+
+actor "Admin Filial" as AF
+actor "Operador" as OP
+actor "Sistema SEFAZ" as SEFAZ
+actor "Sistema" as SYS
+
+rectangle "Supply Chain Service" {
+  usecase "Monitorar XML SEFAZ" as UC_SEFAZ
+  usecase "Conferência Cega" as UC_Blind
+  usecase "Cadastrar Fornecedores" as UC_Supplier
+  usecase "Pedidos de Compra (PO)" as UC_PO
+  usecase "Rating Fornecedor" as UC_Rating
+  usecase "Gestão de Devoluções" as UC_Return
+}
+
+SEFAZ ..> UC_SEFAZ : <<trigger>>
+AF --> UC_Supplier
+AF --> UC_PO
+AF --> UC_Return
+OP --> UC_Blind
+OP --> UC_PO
+OP --> UC_Return
+SYS --> UC_Rating
+
+@enduml

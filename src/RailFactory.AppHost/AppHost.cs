@@ -58,6 +58,7 @@ var gateway = builder.AddProject<Projects.RailFactory_Gateway>("gateway")
 
 var frontend = builder.AddProject<Projects.RailFactory_Frontend>("frontend")
     .WithReference(gateway)
-    .WithHttpEndpoint(port: 5082, name: "ngrok");
+    .WithHttpEndpoint(port: 5082, name: "ngrok")
+    .WaitFor(gateway);
 
 builder.Build().Run();

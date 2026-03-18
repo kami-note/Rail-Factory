@@ -32,9 +32,12 @@ public sealed class GoogleAuthProxyHandler
             var client = _httpClientFactory.CreateClient(GatewayServiceCollectionExtensions.GatewayHttpClientName);
             using var response = await client.GetAsync(AuthConstants.GoogleStartPath, cancellationToken).ConfigureAwait(false);
 
-            if (response.Headers.Location is not { } location)
+            if (!IsRedirectStatusCode(response.StatusCode) || response.Headers.Location is not { } location)
             {
-                _logger.LogWarning("Gateway {Path} returned status {StatusCode} without Location header.", AuthConstants.GoogleStartPath, response.StatusCode);
+                _logger.LogWarning(
+                    "Gateway {Path} returned {StatusCode} (expected 3xx with Location).",
+                    AuthConstants.GoogleStartPath,
+                    (int)response.StatusCode);
                 return RedirectToLoginWithError(AuthConstants.ErrorSignInUnavailable);
             }
 
@@ -63,7 +66,8 @@ public sealed class GoogleAuthProxyHandler
                 request.Headers.TryAddWithoutValidation("Cookie", cookieHeader.ToString());
 
             using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            await CopyProxyResponseAsync(context, response, cancellationToken).ConfigureAwait(false);
+            var gatewayHost = response.RequestMessage?.RequestUri?.Host;
+            await CopyProxyResponseAsync(context, response, gatewayHost, cancellationToken).ConfigureAwait(false);
             return null;
         }
         catch (Exception ex)
@@ -81,7 +85,11 @@ public sealed class GoogleAuthProxyHandler
             context.Response.Headers.Append("Set-Cookie", value);
     }
 
-    private static async Task CopyProxyResponseAsync(HttpContext context, HttpResponseMessage response, CancellationToken cancellationToken)
+    private static async Task CopyProxyResponseAsync(
+        HttpContext context,
+        HttpResponseMessage response,
+        string? gatewayHost,
+        CancellationToken cancellationToken)
     {
         CopyHeaders(context.Response.Headers, response.Headers);
         CopyHeaders(context.Response.Headers, response.Content.Headers);
@@ -89,10 +97,14 @@ public sealed class GoogleAuthProxyHandler
 
         if (IsRedirect(response) && response.Headers.Location is { } location)
         {
-            var pathAndQuery = location.PathAndQuery;
-            if (!pathAndQuery.StartsWith('/'))
-                pathAndQuery = "/" + pathAndQuery;
-            context.Response.Headers["Location"] = $"{context.Request.Scheme}://{context.Request.Host}" + pathAndQuery;
+            var rewritten = RedirectLocationRewriter.RewriteLocationIfNeeded(
+                requestScheme: context.Request.Scheme,
+                publicHost: context.Request.Host.ToString(),
+                gatewayHost: gatewayHost,
+                location: location);
+
+            if (rewritten is not null)
+                context.Response.Headers["Location"] = rewritten;
         }
 
         await response.Content.CopyToAsync(context.Response.Body, cancellationToken).ConfigureAwait(false);
@@ -109,7 +121,13 @@ public sealed class GoogleAuthProxyHandler
     }
 
     private static bool IsRedirect(HttpResponseMessage response) =>
-        response.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.MovedPermanently or (HttpStatusCode)307 or (HttpStatusCode)308;
+        IsRedirectStatusCode(response.StatusCode);
+
+    private static bool IsRedirectStatusCode(HttpStatusCode statusCode)
+    {
+        var code = (int)statusCode;
+        return code >= 300 && code < 400;
+    }
 
     private static IResult RedirectToLoginWithError(string error) =>
         Results.Redirect(AuthConstants.LoginPath + "?error=" + Uri.EscapeDataString(error), permanent: false);

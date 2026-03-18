@@ -19,11 +19,20 @@ public static class GatewayServiceCollectionExtensions
     {
         var baseUrl = GatewayOptions.GetBaseUrl(configuration);
 
-        services.Configure<GatewayOptions>(opts => opts.BaseUrl = baseUrl);
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri) || string.IsNullOrWhiteSpace(baseUri.Scheme) || string.IsNullOrWhiteSpace(baseUri.Host))
+        {
+            throw new InvalidOperationException(
+                $"Gateway base URL is invalid. Expected an absolute URI (e.g. 'http://gateway:port'). Got '{baseUrl}'. " +
+                "Check Aspire service discovery env vars for 'services:gateway:http:0'/'services:gateway:https:0' (or 'services__gateway__http__0'/'services__gateway__https__0').");
+        }
+
+        var normalizedBaseUrl = baseUri.ToString();
+
+        services.Configure<GatewayOptions>(opts => opts.BaseUrl = normalizedBaseUrl);
 
         services.AddHttpClient(GatewayHttpClientName, (_, client) =>
         {
-            client.BaseAddress = new Uri(baseUrl);
+            client.BaseAddress = baseUri;
             client.Timeout = TimeSpan.FromSeconds(30);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {

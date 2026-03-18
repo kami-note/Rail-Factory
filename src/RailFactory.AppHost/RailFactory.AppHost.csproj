@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RailFactory.Gateway\RailFactory.Gateway.csproj" />
     <ProjectReference Include="..\RailFactory.Iam\RailFactory.Iam.Api\RailFactory.Iam.Api.csproj" />
+    <ProjectReference Include="..\RailFactory.Frontend\RailFactory.Frontend.csproj" />
   </ItemGroup>
 
 </Project>

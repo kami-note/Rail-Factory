@@ -1,0 +1,28 @@
+@import "tailwindcss" source(none);
+
+@source "../Components/**/*.razor";
+@source "../Components/**/*.cs";
+@source "../wwwroot/**/*.html";
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    color-scheme: dark;
+    background-color: rgb(2 6 23);
+    color: rgb(241 245 249);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    color: rgb(125 211 252);
+  }
+
+  a:hover {
+    color: rgb(186 230 253);
+  }
+}
+

@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.0.0
@@ -16,6 +16,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RailFactory.Iam.Api", "RailFactory.Iam\RailFactory.Iam.Api\RailFactory.Iam.Api.csproj", "{B9B9C354-C852-41F9-A7E8-9610C4975019}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RailFactory.Gateway", "RailFactory.Gateway\RailFactory.Gateway.csproj", "{C1D8E1A2-3F4B-5E6C-7A8B-9C0D1E2F3A4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RailFactory.Frontend", "RailFactory.Frontend\RailFactory.Frontend.csproj", "{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,6 +113,18 @@ Global
 		{C1D8E1A2-3F4B-5E6C-7A8B-9C0D1E2F3A4B}.Release|x64.Build.0 = Release|Any CPU
 		{C1D8E1A2-3F4B-5E6C-7A8B-9C0D1E2F3A4B}.Release|x86.ActiveCfg = Release|Any CPU
 		{C1D8E1A2-3F4B-5E6C-7A8B-9C0D1E2F3A4B}.Release|x86.Build.0 = Release|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Debug|x64.Build.0 = Debug|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Debug|x86.Build.0 = Debug|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Release|x64.ActiveCfg = Release|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Release|x64.Build.0 = Release|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Release|x86.ActiveCfg = Release|Any CPU
+		{B6CCD44A-E0CB-4ABE-BB7C-63816EB4594E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

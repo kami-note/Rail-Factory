@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+
+<div class="min-h-dvh">
+    <div class="mx-auto max-w-7xl px-4 py-6 lg:flex lg:gap-8">
+        <aside class="mb-6 lg:mb-0 lg:w-64">
+            <NavMenu />
+        </aside>
+
+        <main class="min-w-0 flex-1">
+            <header class="mb-6 flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/40 px-5 py-4">
+                <div>
+                    <div class="text-sm font-medium text-slate-400">Rail Factory</div>
+                    <div class="text-lg font-semibold tracking-tight">Frontend</div>
+                </div>
+
+                <a class="text-sm text-slate-400 hover:text-slate-200" href="https://learn.microsoft.com/aspnet/core/blazor/" target="_blank" rel="noreferrer">
+                    Blazor docs
+                </a>
+            </header>
+
+            <article class="rounded-2xl border border-slate-800 bg-slate-900/20 p-6">
+                @Body
+            </article>
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui" class="fixed inset-x-0 bottom-0 hidden border-t border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100" data-nosnippet>
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
+        <div>
+            An unhandled error has occurred.
+            <a href="." class="ml-2 underline">Reload</a>
+        </div>
+        <button class="dismiss rounded-lg px-2 py-1 text-amber-100/80 hover:text-amber-50" type="button">Dismiss</button>
+    </div>
+</div>

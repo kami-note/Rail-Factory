@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RailFactory.ServiceDefaults\RailFactory.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <Target Name="TailwindCss" BeforeTargets="ResolveStaticWebAssets;Build">
+    <Exec Command="npm ci" WorkingDirectory="$(ProjectDir)" Condition="Exists('$(ProjectDir)package-lock.json') AND !Exists('$(ProjectDir)node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(ProjectDir)" Condition="!Exists('$(ProjectDir)package-lock.json') AND !Exists('$(ProjectDir)node_modules')" />
+
+    <Exec Command="npm run build:css:prod" WorkingDirectory="$(ProjectDir)" Condition="'$(Configuration)' == 'Release'" />
+    <Exec Command="npm run build:css" WorkingDirectory="$(ProjectDir)" Condition="'$(Configuration)' != 'Release'" />
+  </Target>
+
+</Project>

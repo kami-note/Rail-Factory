@@ -1,0 +1,22 @@
+@page "/counter"
+@rendermode InteractiveServer
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status" class="text-slate-300">Current count: <span class="font-semibold text-slate-50">@currentCount</span></p>
+
+<button class="inline-flex items-center justify-center rounded-xl bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-300"
+        @onclick="IncrementCount">
+    Click me
+</button>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

@@ -60,12 +60,13 @@ Este documento descreve a arquitetura de microserviços planejada para o sistema
 
 ---
 
-## 6. HR Service (Recursos Humanos)
-**Responsabilidade:** Gestão da força de trabalho no chão de fábrica.
+## 6. HR Service (Cadastro de Pessoas / Dados de Terceiros)
+**Responsabilidade:** Manter **cadastro de pessoas** (colaboradores, motoristas, etc.) que são referenciadas em documentos e por outros microserviços. Essas pessoas **podem não ter acesso ao sistema** — por exemplo, o motorista consta no sistema e em documentos de entrega, mas não é usuário da aplicação.
 
 ### Requisitos Funcionais
-*   **Apontamento de Horas:** Registro de horas trabalhadas por operador em cada OP.
-*   **Integração Contábil:** Exportação de dados para softwares de folha de pagamento/contabilidade.
+*   **Cadastro de Pessoas:** Dados de colaboradores, motoristas e demais pessoas que precisam ser mencionadas em documentos (perfil, cargo, histórico).
+*   **Matriz de Competências:** Habilidades técnicas por pessoa (ex.: operador de solda, empilhadeira).
+*   **Escalas e Turnos:** Jornadas de trabalho por pessoa ou função (6x1, 5x2, turnos noturnos).
 
 ---
 

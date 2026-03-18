@@ -77,16 +77,14 @@ Controle total sobre os ativos de transporte.
 
 ---
 
-## 6. HR Service (Recursos Humanos)
-Foco na produtividade e bem-estar do colaborador fabril.
+## 6. HR Service (Cadastro de Pessoas / Dados de Terceiros)
+Mantém **dados de outras pessoas** que precisam ser referenciadas em documentos e por outros serviços (ex.: motorista em documentos de entrega, colaborador em ordens de produção). Essas pessoas **podem não ter acesso ao sistema** — estão no sistema apenas como cadastro (master data).
 
 | ID | Requisito | Descrição | Prioridade |
 |:---|:---|:---|:---|
-| **RF-HRS-01** | Perfil do Colaborador | Dados pessoais, cargos, salários e histórico funcional. | Essencial |
-| **RF-HRS-02** | Matriz de Competências | Registro de habilidades técnicas (ex: operador de solda, empilhadeira). | Importante |
-| **RF-HRS-03** | Escalas e Turnos | Definição de jornadas de trabalho (6x1, 5x2, turnos noturnos). | Essencial |
-| **RF-HRS-04** | Apontamento de Horas | Integração com o Production Service para medir tempo produtivo vs. tempo ocioso. | Essencial |
-| **RF-HRS-05** | Gestão de Treinamentos | Controle de vencimento de NR (Normas Regulamentadoras) obrigatórias. | Importante |
+| **RF-HRS-01** | Cadastro de Pessoas | Dados de colaboradores, motoristas e demais pessoas referenciadas em documentos (dados pessoais, cargo, histórico). A pessoa pode estar no sistema sem possuir acesso a ele. | Essencial |
+| **RF-HRS-02** | Matriz de Competências | Registro de habilidades técnicas por pessoa (ex: operador de solda, empilhadeira). | Importante |
+| **RF-HRS-03** | Escalas e Turnos | Definição de jornadas de trabalho por pessoa ou função (6x1, 5x2, turnos noturnos). | Essencial |
 
 ---
 

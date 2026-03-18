@@ -7,7 +7,7 @@ Este documento detalha o ciclo de vida completo do projeto, desde a concepção 
 ## ⚪ FASE 0: DESIGN E MODELAGEM (DOCUMENTAÇÃO)
 *Foco: Atender aos requisitos acadêmicos e definir a arquitetura.*
 
-- [ ] **[DOC]** Elaborar Diagrama de Casos de Uso (Geral e por Microserviço).
+- [x] **[DOC]** Elaborar Diagrama de Casos de Uso (Geral e por Microserviço). *(→ [docs/phase0/USE-CASE-DIAGRAM.md](phase0/USE-CASE-DIAGRAM.md))*
 - [ ] **[DOC]** Modelar Processos de Negócio em **BPMN** (Produção e Inbound).
 - [ ] **[DOC]** Criar Diagrama de Classes e Diagrama de Entidade-Relacionamento (DER).
 - [ ] **[DOC]** Desenhar Diagrama de Sequência para fluxos críticos (Ex: Reserva de Estoque).
@@ -53,8 +53,7 @@ Este documento detalha o ciclo de vida completo do projeto, desde a concepção 
 ## 🟪 FASE 4: RH E INTELIGÊNCIA DE DADOS (BI)
 *Foco: Performance humana e eficiência de máquinas.*
 
-- [ ] **[HRS]** RF-HRS-01/04: Registro de Ponto e Apontamento de Mão de Obra.
-- [ ] **[HRS]** RF-HRS-02: Validação de Competências para Operação de Máquinas.
+- [ ] **[HRS]** RF-HRS-01 a 03: Cadastro de Pessoas, Matriz de Competências, Escalas e Turnos.
 - [ ] **[DSH]** RF-DSH-01: Engine de Cálculo de OEE (Disponibilidade x Performance x Qualidade).
 - [ ] **[DSH]** Dashboards em Real-time usando SignalR (Gráficos e Alertas).
 

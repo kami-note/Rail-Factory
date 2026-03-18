@@ -10,3 +10,6 @@ run-clean:
 
 run-ngrok:
 	ngrok http --domain=apparent-driving-horse.ngrok-free.app 5080
+
+run-diagrams:
+	./scripts/render-plantuml-diagrams.sh

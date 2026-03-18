@@ -91,10 +91,16 @@ AM --> UC_DSH_Costs
 AF --> UC_IAM_Login
 AF --> UC_SUP_Supplier
 AF --> UC_SUP_PO
+AF --> UC_SUP_Rating
+AF --> UC_SUP_Return
 AF --> UC_LOG_Carrier
+AF --> UC_LOG_Freight
 AF --> UC_FLE_Vehicle
+AF --> UC_FLE_Maint
 AF --> UC_FLE_Driver
+AF --> UC_FLE_Telemetry
 AF --> UC_HR_Profile
+AF --> UC_HR_Skills
 AF --> UC_HR_Shifts
 AF --> UC_DSH_OEE
 AF --> UC_DSH_Alerts

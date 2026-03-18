@@ -4,5 +4,6 @@ public interface IAuthService
 {
     Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken);
     Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
+    Task<AuthResult> ExchangeGoogleAuthCodeAsync(string code, CancellationToken cancellationToken);
 }
 

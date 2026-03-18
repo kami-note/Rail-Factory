@@ -57,6 +57,7 @@ public static class ServiceCollectionExtensions
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
         services.AddSingleton<IGoogleAuthProvider, GoogleAuthProvider>();
         services.AddScoped<IOAuthStateStore, DistributedCacheOAuthStateStore>();
+        services.AddScoped<IAuthCodeStore, DistributedCacheAuthCodeStore>();
 
         return services;
     }

@@ -22,15 +22,23 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     }
 });
 
-builder.Services.AddDistributedMemoryCache();
 builder.Services.AddHttpClient();
+
+// Use Redis for distributed cache (OAuth state + auth exchange codes)
+var redisConnectionString = builder.Configuration.GetConnectionString("redis")
+    ?? throw new InvalidOperationException("Connection string 'redis' is not configured.");
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnectionString;
+});
 
 // Hexagonal Architecture: Register Application and Infrastructure layers
 builder.Services.AddIamApplication();
 builder.Services.AddIamInfrastructure(builder.Configuration);
 
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<IamDbContext>("iamdb", tags: ["ready"]);
+    .AddDbContextCheck<IamDbContext>("iamdb", tags: ["ready"])
+    .AddRedis(redisConnectionString, name: "redis", tags: ["ready"]);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

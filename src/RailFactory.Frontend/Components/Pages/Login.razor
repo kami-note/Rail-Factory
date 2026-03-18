@@ -3,11 +3,7 @@
 @layout RailFactory.Frontend.Components.Layout.AuthLayout
 @rendermode InteractiveServer
 
-@using System.ComponentModel.DataAnnotations
 @using RailFactory.Frontend.Security
-@inject IAuthService Auth
-@inject IAuthSession Session
-@inject NavigationManager Nav
 
 <PageTitle>Login</PageTitle>
 
@@ -17,73 +13,22 @@
         Dev-only login for now. This will be replaced by IAM integration.
     </p>
 
-    <EditForm Model="model" OnValidSubmit="OnSubmitAsync">
-        <DataAnnotationsValidator />
+    <UiCard Class="space-y-4">
+        <div class="text-sm text-slate-700">
+            Authentication is handled by IAM via Google OAuth.
+        </div>
 
-        <UiCard Class="space-y-4">
-            <UiTextField Label="Email"
-                         @bind-Value="model.Email"
-                         For="() => model.Email"
-                         Autocomplete="email" />
+        <a href="/auth/google"
+           class="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+            Continue with Google
+        </a>
 
-            <UiTextField Label="Password"
-                         @bind-Value="model.Password"
-                         For="() => model.Password"
-                         Type="password"
-                         Autocomplete="current-password" />
-
-            <UiAlert Kind="UiAlert.AlertKind.Danger" Message="@error" />
-
-            <div class="flex items-center justify-between gap-3">
-                <UiButton Type="submit" Disabled="@isBusy">
-                    @(isBusy ? "Signing in…" : "Sign in")
-                </UiButton>
-
-                <a class="text-sm text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-900"
-                   href="/register">
-                    Create account
-                </a>
-            </div>
-        </UiCard>
-    </EditForm>
+        <div class="text-xs text-slate-500">
+            After Google sign-in, you will be redirected to <span class="font-mono">/auth/callback</span>.
+        </div>
+    </UiCard>
 </div>
 
 @code {
-    private readonly LoginModel model = new();
-    private bool isBusy;
-    private string? error;
-
-    private async Task OnSubmitAsync()
-    {
-        if (isBusy) return;
-        isBusy = true;
-        error = null;
-
-        try
-        {
-            var result = await Auth.LoginAsync(new LoginRequest(model.Email, model.Password), CancellationToken.None);
-            if (!result.Success || result.Principal is null)
-            {
-                error = result.Error ?? "Unable to sign in.";
-                return;
-            }
-
-            await Session.SignInAsync(result.Principal, CancellationToken.None);
-            Nav.NavigateTo("/", replace: true);
-        }
-        finally
-        {
-            isBusy = false;
-        }
-    }
-
-    private sealed class LoginModel
-    {
-        [Required, EmailAddress]
-        public string Email { get; set; } = "";
-
-        [Required, MinLength(6)]
-        public string Password { get; set; } = "";
-    }
 }
 

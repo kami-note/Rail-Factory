@@ -5,16 +5,15 @@
 
 <div>
     <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">@Label</label>
-    <InputText @bind-Value="Value"
+    <InputText Value="@Value"
+               ValueChanged="@ValueChanged"
+               ValueExpression="@For"
                type="@Type"
                class="@CssClass"
                autocomplete="@Autocomplete"
                placeholder="@Placeholder"
                @attributes="AdditionalAttributes" />
-    @if (For is not null)
-    {
-        <ValidationMessage For="For" class="mt-1 block text-sm text-rose-600" />
-    }
+    <ValidationMessage For="For" class="mt-1 block text-sm text-rose-600" />
 </div>
 
 @code {
@@ -25,7 +24,7 @@
 
     [Parameter] public string Value { get; set; } = "";
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
-    [Parameter] public Expression<Func<string>>? For { get; set; }
+    [Parameter, EditorRequired] public Expression<Func<string>> For { get; set; } = default!;
 
     [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }

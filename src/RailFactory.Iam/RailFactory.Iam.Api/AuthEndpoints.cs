@@ -33,26 +33,30 @@ public static class AuthEndpoints
         group.MapGet("/google/callback", async (
             string? code,
             string? state,
+            HttpContext context,
             IGoogleAuthProvider googleAuth,
             IUserApplicationService userService,
             IOptions<GoogleAuthOptions> googleOptions,
             IOAuthStateStore stateStore,
+            IAuthCodeStore authCodeStore,
             CancellationToken ct) =>
         {
             var opts = googleOptions.Value;
-            if (string.IsNullOrEmpty(opts.RedirectUri) || string.IsNullOrEmpty(opts.FrontendRedirectUri))
+            if (string.IsNullOrEmpty(opts.RedirectUri))
                 return Results.BadRequest("Google OAuth redirect URIs are not configured.");
 
+            var frontendRedirectUri = ResolveFrontendRedirectUri(opts.FrontendRedirectUri, context);
+
             if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(state))
-                return Results.Redirect(opts.FrontendRedirectUri + "?error=missing_code_or_state");
+                return Results.Redirect(frontendRedirectUri + "?error=missing_code_or_state");
 
             var storedNonce = await stateStore.GetAndRemoveStateAsync(state, ct);
             if (string.IsNullOrEmpty(storedNonce))
-                return Results.Redirect(opts.FrontendRedirectUri + "?error=invalid_state");
+                return Results.Redirect(frontendRedirectUri + "?error=invalid_state");
 
             var idToken = await googleAuth.ExchangeCodeForIdTokenAsync(code, opts.RedirectUri, ct).ConfigureAwait(false);
             if (string.IsNullOrEmpty(idToken))
-                return Results.Redirect(opts.FrontendRedirectUri + "?error=token_exchange_failed");
+                return Results.Redirect(frontendRedirectUri + "?error=token_exchange_failed");
 
             try
             {
@@ -60,15 +64,17 @@ public static class AuthEndpoints
             }
             catch (UnauthorizedAccessException)
             {
-                return Results.Redirect(opts.FrontendRedirectUri + "?error=unauthorized");
+                return Results.Redirect(frontendRedirectUri + "?error=unauthorized");
             }
             catch (UserExpelledException)
             {
-                return Results.Redirect(opts.FrontendRedirectUri + "?error=expelled");
+                return Results.Redirect(frontendRedirectUri + "?error=expelled");
             }
 
-            var fragment = "id_token=" + Uri.EscapeDataString(idToken);
-            return Results.Redirect(opts.FrontendRedirectUri + "#" + fragment);
+            // Professional flow: do not send tokens to the browser. Generate one-time code and let frontend exchange server-to-server.
+            var exchangeCode = Guid.NewGuid().ToString("N");
+            await authCodeStore.StoreAsync(exchangeCode, idToken, TimeSpan.FromMinutes(1), ct).ConfigureAwait(false);
+            return Results.Redirect(frontendRedirectUri + "?code=" + Uri.EscapeDataString(exchangeCode));
         });
 
         group.MapPost("/google", async ([FromBody] GoogleLoginRequest request, IUserApplicationService userService, CancellationToken ct) =>
@@ -89,7 +95,37 @@ public static class AuthEndpoints
                 return Results.Json(new { error = "Account has been expelled." }, statusCode: 403);
             }
         });
+
+        group.MapPost("/exchange", async ([FromBody] ExchangeRequest request, IAuthCodeStore authCodeStore, IUserApplicationService userService, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Code))
+                return Results.BadRequest("Code is required.");
+
+            var idToken = await authCodeStore.ConsumeAsync(request.Code.Trim(), ct).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(idToken))
+                return Results.Unauthorized();
+
+            var user = await userService.GetByGoogleIdTokenAsync(idToken, ct).ConfigureAwait(false);
+            return user is null ? Results.Unauthorized() : Results.Ok(new ExchangeResponse(user, idToken));
+        });
     }
 
     internal sealed record GoogleLoginRequest(string? IdToken);
+    internal sealed record ExchangeRequest(string? Code);
+    internal sealed record ExchangeResponse(object User, string IdToken);
+
+    private static string ResolveFrontendRedirectUri(string configured, HttpContext context)
+    {
+        var fallback = $"{context.Request.Scheme}://{context.Request.Host}/auth/callback";
+
+        if (string.IsNullOrWhiteSpace(configured))
+            return fallback;
+
+        // Guard rail: misconfiguration that causes redirect loops via gateway route.
+        // If someone points FrontendRedirectUri to the IAM callback, redirect to the frontend callback on same host instead.
+        if (configured.Contains("/auth/google/callback", StringComparison.OrdinalIgnoreCase))
+            return fallback;
+
+        return configured;
+    }
 }

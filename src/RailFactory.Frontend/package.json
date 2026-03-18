@@ -2,9 +2,9 @@
   "name": "railfactory-frontend",
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i ./Styles/input.css -o ./wwwroot/css/app.css",
-    "build:css:prod": "tailwindcss -i ./Styles/input.css -o ./wwwroot/css/app.css --minify",
-    "watch:css": "tailwindcss -i ./Styles/input.css -o ./wwwroot/css/app.css --watch"
+    "build:css": "npx @tailwindcss/cli -i ./Styles/input.css -o ./wwwroot/css/app.css",
+    "build:css:prod": "npx @tailwindcss/cli -i ./Styles/input.css -o ./wwwroot/css/app.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i ./Styles/input.css -o ./wwwroot/css/app.css --watch"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.12",

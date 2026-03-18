@@ -83,8 +83,11 @@ Desktop.ini
 **/node_modules/
 **/wwwroot/css/app.css
 
+# Diagram tooling / JVM caches (generated; do not commit)
+**/.java/fonts/
+**/fcinfo-*.properties
+
 # Local env (copy from env.example; do not commit secrets)
 .env
 .env.local
 leia.txt
-src/RailFactory.AppHost/AppHost.cs

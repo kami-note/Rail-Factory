@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject IHostEnvironment Environment
 
 <div class="min-h-dvh bg-slate-50 text-slate-900">
     <div class="mx-auto max-w-7xl px-4 py-10">
@@ -7,12 +8,21 @@
                 <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Rail Factory</div>
                 <div class="text-lg font-semibold tracking-tight text-slate-900">Access</div>
             </div>
-            <div class="text-xs text-slate-500">dev</div>
+            @if (Environment.IsDevelopment())
+            {
+                <div class="text-xs text-slate-500">dev</div>
+            }
         </header>
 
         <main>
             @Body
         </main>
+
+        <footer class="mt-10 text-xs text-slate-500">
+            <a class="underline decoration-slate-300 underline-offset-4 hover:text-slate-900" href="/auth/google">
+                Continue with Google
+            </a>
+        </footer>
     </div>
 </div>
 

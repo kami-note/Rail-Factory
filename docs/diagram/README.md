@@ -1,3 +1,24 @@
+## Diagram generation notes
+
+Some diagram tooling (e.g., PlantUML / Java-based renderers) may generate a **JDK font cache** under `docs/diagram/**/.java/fonts/`.
+That cache contains files with the header `*Do Not Edit*` and is **runtime-generated**; it must not be committed.
+
+### Font requirements
+
+To ensure consistent rendering, install the DejaVu font family:
+
+- `DejaVu Sans`
+- `DejaVu Serif`
+- `DejaVu Sans Mono`
+- `DejaVu Math TeX Gyre`
+
+On Ubuntu:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y fonts-dejavu-core fonts-dejavu-extra
+```
+
 # Use Case Diagrams (PlantUML)
 
 Diagramas de casos de uso extraídos de [phase0/USE-CASE-DIAGRAM.md](../phase0/USE-CASE-DIAGRAM.md).

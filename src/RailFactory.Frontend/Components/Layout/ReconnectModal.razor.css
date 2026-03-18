@@ -1,3 +1,9 @@
+#components-reconnect-modal button:focus,
+#components-reconnect-modal button:focus-visible {
+    outline: 2px solid rgb(99 102 241); /* indigo-500 */
+    outline-offset: 2px;
+}
+
 .components-reconnect-first-attempt-visible,
 .components-reconnect-repeated-attempt-visible,
 .components-reconnect-failed-visible,

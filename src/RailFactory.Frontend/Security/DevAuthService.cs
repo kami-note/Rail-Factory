@@ -47,6 +47,12 @@ public sealed class DevAuthService : IAuthService
         return Task.FromResult(AuthResult.Ok(ToPrincipal(record)));
     }
 
+    public Task<AuthResult> ExchangeGoogleAuthCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(AuthResult.Fail("Google login is not available in DevAuthService."));
+    }
+
     private static ClaimsPrincipal ToPrincipal(UserRecord record)
     {
         var claims = new List<Claim>

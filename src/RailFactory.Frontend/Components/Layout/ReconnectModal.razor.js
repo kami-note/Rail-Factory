@@ -14,21 +14,23 @@ function handleReconnectStateChanged(event) {
     } else if (event.detail.state === "hide") {
         reconnectModal.close();
     } else if (event.detail.state === "failed") {
-        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
+        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible, { once: true });
     } else if (event.detail.state === "rejected") {
         location.reload();
     }
 }
 
 async function retry() {
-    document.removeEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
-
     try {
         // Reconnect will asynchronously return:
         // - true to mean success
         // - false to mean we reached the server, but it rejected the connection (e.g., unknown circuit ID)
         // - exception to mean we didn't reach the server (this can be sync or async)
         const successful = await Blazor.reconnect();
+        if (successful) {
+            reconnectModal.close();
+            return;
+        }
         if (!successful) {
             // We have been able to reach the server, but the circuit is no longer available.
             // We'll reload the page so the user can continue using the app as quickly as possible.
@@ -41,7 +43,7 @@ async function retry() {
         }
     } catch (err) {
         // We got an exception, server is currently unavailable
-        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
+        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible, { once: true });
     }
 }
 
@@ -50,6 +52,9 @@ async function resume() {
         const successful = await Blazor.resumeCircuit();
         if (!successful) {
             location.reload();
+        } else {
+            reconnectModal.classList.remove("components-reconnect-paused", "components-reconnect-resume-failed");
+            reconnectModal.close();
         }
     } catch {
         reconnectModal.classList.replace("components-reconnect-paused", "components-reconnect-resume-failed");

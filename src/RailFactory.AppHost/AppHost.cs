@@ -48,7 +48,8 @@ var iam = builder.AddProject<Projects.RailFactory_Iam_Api>("identity-access-mana
 // Frontend (Blazor)
 // -----------------------------------------------------------------------------
 
-var frontend = builder.AddProject<Projects.RailFactory_Frontend>("frontend");
+var frontend = builder.AddProject<Projects.RailFactory_Frontend>("frontend")
+    .WithReference(iam);
 
 // -----------------------------------------------------------------------------
 // Gateway (single entry point)

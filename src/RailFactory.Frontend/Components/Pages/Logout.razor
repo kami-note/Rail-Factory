@@ -1,18 +1,33 @@
 @page "/logout"
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @layout RailFactory.Frontend.Components.Layout.AuthLayout
 
 @using RailFactory.Frontend.Security
 @inject IAuthSession Session
 @inject NavigationManager Nav
+@inject ILogger<Logout> Logger
 
 <PageTitle>Logout</PageTitle>
+<div class="text-sm text-slate-600">Signing out…</div>
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await Session.SignOutAsync(CancellationToken.None);
-        Nav.NavigateTo("/login", replace: true);
+        try
+        {
+            await Session.SignOutAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Sign out failed.");
+        }
+        finally
+        {
+            Nav.NavigateTo("/login", replace: true);
+        }
     }
 }
-

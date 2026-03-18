@@ -1,24 +1,36 @@
 @inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="min-h-dvh">
+<div class="min-h-dvh bg-slate-50">
     <div class="mx-auto max-w-7xl px-4 py-6 lg:flex lg:gap-8">
         <aside class="mb-6 lg:mb-0 lg:w-64">
             <NavMenu />
         </aside>
 
         <main class="min-w-0 flex-1">
-            <header class="mb-6 flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/40 px-5 py-4">
+            <header class="mb-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
                 <div>
-                    <div class="text-sm font-medium text-slate-400">Rail Factory</div>
-                    <div class="text-lg font-semibold tracking-tight">Frontend</div>
+                    <div class="text-sm font-medium text-slate-500">Rail Factory</div>
+                    <div class="text-lg font-semibold tracking-tight">Dev Console</div>
                 </div>
 
-                <a class="text-sm text-slate-400 hover:text-slate-200" href="https://learn.microsoft.com/aspnet/core/blazor/" target="_blank" rel="noreferrer">
-                    Blazor docs
-                </a>
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="text-right">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Signed in</div>
+                            <div class="text-sm text-slate-900">@context.User.Identity?.Name</div>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <div class="text-right">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Session</div>
+                            <div class="text-sm text-slate-700">Anonymous</div>
+                        </div>
+                    </NotAuthorized>
+                </AuthorizeView>
             </header>
 
-            <article class="rounded-2xl border border-slate-800 bg-slate-900/20 p-6">
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 @Body
             </article>
         </main>

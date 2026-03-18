@@ -1,0 +1,100 @@
+@page "/register"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@layout RailFactory.Frontend.Components.Layout.AuthLayout
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using RailFactory.Frontend.Security
+@inject IAuthService Auth
+@inject IAuthSession Session
+@inject NavigationManager Nav
+
+<PageTitle>Register</PageTitle>
+
+<div class="mx-auto max-w-md">
+    <h1 class="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Create account</h1>
+    <p class="mb-6 text-sm text-slate-600">
+        Dev-only registration for now. This will be replaced by IAM integration.
+    </p>
+
+    <EditForm Model="model" OnValidSubmit="OnSubmitAsync">
+        <DataAnnotationsValidator />
+
+        <UiCard Class="space-y-4">
+            <UiTextField Label="Display name"
+                         @bind-Value="model.DisplayName"
+                         For="() => model.DisplayName"
+                         Autocomplete="nickname" />
+
+            <UiTextField Label="Email"
+                         @bind-Value="model.Email"
+                         For="() => model.Email"
+                         Autocomplete="email" />
+
+            <UiTextField Label="Password"
+                         @bind-Value="model.Password"
+                         For="() => model.Password"
+                         Type="password"
+                         Autocomplete="new-password" />
+
+            <UiAlert Kind="UiAlert.AlertKind.Danger" Message="@error" />
+
+            <div class="flex items-center justify-between gap-3">
+                <UiButton Type="submit" Disabled="@isBusy">
+                    @(isBusy ? "Creating…" : "Create account")
+                </UiButton>
+
+                <a class="text-sm text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-900"
+                   href="/login">
+                    Back to login
+                </a>
+            </div>
+        </UiCard>
+    </EditForm>
+</div>
+
+@code {
+    private readonly RegisterModel model = new();
+    private bool isBusy;
+    private string? error;
+
+    private async Task OnSubmitAsync()
+    {
+        if (isBusy) return;
+        isBusy = true;
+        error = null;
+
+        try
+        {
+            var result = await Auth.RegisterAsync(
+                new RegisterRequest(model.Email, model.Password, model.DisplayName),
+                CancellationToken.None);
+
+            if (!result.Success || result.Principal is null)
+            {
+                error = result.Error ?? "Unable to register.";
+                return;
+            }
+
+            await Session.SignInAsync(result.Principal, CancellationToken.None);
+            Nav.NavigateTo("/", replace: true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private sealed class RegisterModel
+    {
+        [Required, MinLength(2)]
+        public string DisplayName { get; set; } = "";
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required, MinLength(6)]
+        public string Password { get; set; } = "";
+    }
+}
+

@@ -1,10 +1,28 @@
 @page "/"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Home</PageTitle>
 
-<div class="space-y-3">
-    <h1 class="text-2xl font-semibold tracking-tight">Hello, world!</h1>
-    <p class="text-slate-300">
-        Welcome to the Rail Factory frontend (Blazor + Tailwind CSS).
-    </p>
-</div>
+<h1 class="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Authenticated</h1>
+<p class="mb-6 text-sm text-slate-600">
+    You are signed in. This is the minimal authenticated shell for dev.
+</p>
+
+<UiCard>
+    <div class="text-xs font-semibold uppercase tracking-wider text-slate-500">Current user</div>
+    <div class="mt-2 text-sm text-slate-800">
+        <div><span class="text-slate-500">Name</span>: @authState?.User?.Identity?.Name</div>
+        <div><span class="text-slate-500">Auth</span>: @(authState?.User?.Identity?.IsAuthenticated == true ? "true" : "false")</div>
+    </div>
+</UiCard>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+    private AuthenticationState? authState;
+
+    protected override async Task OnInitializedAsync()
+    {
+        authState = AuthenticationStateTask is null ? null : await AuthenticationStateTask;
+    }
+}

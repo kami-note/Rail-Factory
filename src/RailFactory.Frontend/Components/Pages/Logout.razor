@@ -1,0 +1,18 @@
+@page "/logout"
+@rendermode InteractiveServer
+@layout RailFactory.Frontend.Components.Layout.AuthLayout
+
+@using RailFactory.Frontend.Security
+@inject IAuthSession Session
+@inject NavigationManager Nav
+
+<PageTitle>Logout</PageTitle>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Session.SignOutAsync(CancellationToken.None);
+        Nav.NavigateTo("/login", replace: true);
+    }
+}
+

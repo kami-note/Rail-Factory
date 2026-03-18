@@ -1,0 +1,89 @@
+@page "/login"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@layout RailFactory.Frontend.Components.Layout.AuthLayout
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using RailFactory.Frontend.Security
+@inject IAuthService Auth
+@inject IAuthSession Session
+@inject NavigationManager Nav
+
+<PageTitle>Login</PageTitle>
+
+<div class="mx-auto max-w-md">
+    <h1 class="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Sign in</h1>
+    <p class="mb-6 text-sm text-slate-600">
+        Dev-only login for now. This will be replaced by IAM integration.
+    </p>
+
+    <EditForm Model="model" OnValidSubmit="OnSubmitAsync">
+        <DataAnnotationsValidator />
+
+        <UiCard Class="space-y-4">
+            <UiTextField Label="Email"
+                         @bind-Value="model.Email"
+                         For="() => model.Email"
+                         Autocomplete="email" />
+
+            <UiTextField Label="Password"
+                         @bind-Value="model.Password"
+                         For="() => model.Password"
+                         Type="password"
+                         Autocomplete="current-password" />
+
+            <UiAlert Kind="UiAlert.AlertKind.Danger" Message="@error" />
+
+            <div class="flex items-center justify-between gap-3">
+                <UiButton Type="submit" Disabled="@isBusy">
+                    @(isBusy ? "Signing in…" : "Sign in")
+                </UiButton>
+
+                <a class="text-sm text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-900"
+                   href="/register">
+                    Create account
+                </a>
+            </div>
+        </UiCard>
+    </EditForm>
+</div>
+
+@code {
+    private readonly LoginModel model = new();
+    private bool isBusy;
+    private string? error;
+
+    private async Task OnSubmitAsync()
+    {
+        if (isBusy) return;
+        isBusy = true;
+        error = null;
+
+        try
+        {
+            var result = await Auth.LoginAsync(new LoginRequest(model.Email, model.Password), CancellationToken.None);
+            if (!result.Success || result.Principal is null)
+            {
+                error = result.Error ?? "Unable to sign in.";
+                return;
+            }
+
+            await Session.SignInAsync(result.Principal, CancellationToken.None);
+            Nav.NavigateTo("/", replace: true);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required, MinLength(6)]
+        public string Password { get; set; } = "";
+    }
+}
+

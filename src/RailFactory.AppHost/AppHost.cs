@@ -45,19 +45,19 @@ var iam = builder.AddProject<Projects.RailFactory_Iam_Api>("identity-access-mana
     .WaitFor(iamDb);
 
 // -----------------------------------------------------------------------------
-// Gateway (single entry point; runs on host so it can reach IAM via service discovery)
-// -----------------------------------------------------------------------------
-
-var gateway = builder.AddProject<Projects.RailFactory_Gateway>("gateway")
-    .WithReference(iam)
-    .WaitFor(iam);
-
-// -----------------------------------------------------------------------------
 // Frontend (Blazor)
 // -----------------------------------------------------------------------------
 
-builder.AddProject<Projects.RailFactory_Frontend>("frontend")
-    .WithReference(gateway)
-    .WaitFor(gateway);
+var frontend = builder.AddProject<Projects.RailFactory_Frontend>("frontend");
+
+// -----------------------------------------------------------------------------
+// Gateway (single entry point)
+// -----------------------------------------------------------------------------
+
+builder.AddProject<Projects.RailFactory_Gateway>("gateway")
+    .WithReference(iam)
+    .WithReference(frontend)
+    .WaitFor(iam)
+    .WaitFor(frontend);
 
 builder.Build().Run();

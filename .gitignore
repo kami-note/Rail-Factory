@@ -79,8 +79,12 @@ Desktop.ini
 # Aspire / run
 *.runtimeconfig.json
 
+# Node / Tailwind
+**/node_modules/
+**/wwwroot/css/app.css
+
 # Local env (copy from env.example; do not commit secrets)
 .env
 .env.local
 leia.txt
-*?
+src/RailFactory.AppHost/AppHost.cs

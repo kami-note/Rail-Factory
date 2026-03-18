@@ -1,27 +1,40 @@
-<div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-4">
+@using Microsoft.AspNetCore.Components.Authorization
+
+<UiCard Class="p-4">
     <div class="mb-4">
         <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Rail Factory</div>
-        <div class="text-base font-semibold text-slate-100">Navigation</div>
+        <div class="text-base font-semibold text-slate-900">Navigation</div>
     </div>
 
     <nav class="space-y-1">
-        <NavLink href="" Match="NavLinkMatch.All"
-                 class="block rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
-                 ActiveClass="bg-slate-800/70 text-slate-50">
-            Home
-        </NavLink>
+        <AuthorizeView>
+            <Authorized>
+                <NavLink href="" Match="NavLinkMatch.All"
+                         class="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                         ActiveClass="bg-indigo-50 text-indigo-700">
+                    Home
+                </NavLink>
 
-        <NavLink href="counter"
-                 class="block rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
-                 ActiveClass="bg-slate-800/70 text-slate-50">
-            Counter
-        </NavLink>
+                <NavLink href="logout"
+                         class="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                         ActiveClass="bg-indigo-50 text-indigo-700">
+                    Logout
+                </NavLink>
+            </Authorized>
+            <NotAuthorized>
+                <NavLink href="login"
+                         class="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                         ActiveClass="bg-indigo-50 text-indigo-700">
+                    Login
+                </NavLink>
 
-        <NavLink href="weather"
-                 class="block rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
-                 ActiveClass="bg-slate-800/70 text-slate-50">
-            Weather
-        </NavLink>
+                <NavLink href="register"
+                         class="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                         ActiveClass="bg-indigo-50 text-indigo-700">
+                    Register
+                </NavLink>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
-</div>
+</UiCard>
 

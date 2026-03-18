@@ -1,0 +1,16 @@
+@namespace RailFactory.Frontend.Components.Ui
+
+<div class="@CssClass">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = default!;
+    [Parameter] public string? Class { get; set; }
+
+    private string CssClass =>
+        string.IsNullOrWhiteSpace(Class)
+            ? "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            : $"rounded-2xl border border-slate-200 bg-white p-5 shadow-sm {Class}";
+}
+

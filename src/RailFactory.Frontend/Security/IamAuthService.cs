@@ -5,18 +5,48 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace RailFactory.Frontend.Security;
 
-public sealed class IamAuthService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IDistributedCache cache) : IAuthService
+public sealed class IamAuthService(
+    IHttpClientFactory httpClientFactory,
+    IConfiguration configuration,
+    IDistributedCache cache,
+    ILogger<IamAuthService> logger) : IAuthService
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private const string CallbackStateCookieName = "rf_login_state";
 
     public Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
         => Task.FromResult(AuthResult.Fail("Registration is handled by Google sign-in in IAM."));
 
     public Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
         => Task.FromResult(AuthResult.Fail("Password login is not supported. Use Google sign-in."));
+
+    public Task<bool> ValidateStateAsync(HttpContext context, string? state, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(state))
+            return Task.FromResult(false);
+
+        if (!context.Request.Cookies.TryGetValue(CallbackStateCookieName, out var expected) || string.IsNullOrWhiteSpace(expected))
+            return Task.FromResult(false);
+
+        var ok = string.Equals(expected, state, StringComparison.Ordinal);
+        if (ok)
+        {
+            context.Response.Cookies.Delete(CallbackStateCookieName, new CookieOptions
+            {
+                Path = "/",
+                Secure = context.Request.IsHttps,
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax
+            });
+        }
+
+        return Task.FromResult(ok);
+    }
 
     public async Task<AuthResult> ExchangeGoogleAuthCodeAsync(string code, CancellationToken cancellationToken)
     {
@@ -59,7 +89,8 @@ public sealed class IamAuthService(IHttpClientFactory httpClientFactory, IConfig
         }
         catch (Exception ex)
         {
-            return AuthResult.Fail($"IAM exchange error: {ex.Message}");
+            logger.LogError(ex, "IAM exchange error while exchanging one-time auth code.");
+            return AuthResult.Fail("IAM exchange error.");
         }
     }
 

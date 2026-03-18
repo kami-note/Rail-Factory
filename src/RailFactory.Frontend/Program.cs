@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Antiforgery;
 using RailFactory.Frontend.Security;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,8 +47,34 @@ var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
 };
-forwardedHeadersOptions.KnownIPNetworks.Clear();
-forwardedHeadersOptions.KnownProxies.Clear();
+
+var trustAllForwardedHeaders = builder.Configuration.GetValue<bool>("RAILFACTORY_TRUST_ALL_FORWARDED_HEADERS");
+if (trustAllForwardedHeaders)
+{
+    forwardedHeadersOptions.KnownIPNetworks.Clear();
+    forwardedHeadersOptions.KnownProxies.Clear();
+}
+else
+{
+    var trustedProxies = builder.Configuration["RAILFACTORY_TRUSTED_PROXIES"];
+    if (!string.IsNullOrWhiteSpace(trustedProxies))
+    {
+        foreach (var entry in trustedProxies.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (IPAddress.TryParse(entry, out var ip))
+                forwardedHeadersOptions.KnownProxies.Add(ip);
+        }
+    }
+
+    var trustedNetworks = builder.Configuration["RAILFACTORY_TRUSTED_NETWORKS"];
+    if (!string.IsNullOrWhiteSpace(trustedNetworks))
+    {
+        foreach (var entry in trustedNetworks.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            forwardedHeadersOptions.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(entry));
+        }
+    }
+}
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 if (!app.Environment.IsDevelopment())
@@ -62,18 +89,28 @@ app.UseAntiforgery();
 
 app.MapPost("/logout", async (HttpContext context) =>
 {
+    var antiforgery = context.RequestServices.GetRequiredService<IAntiforgery>();
+
     try
     {
-        var antiforgery = context.RequestServices.GetRequiredService<IAntiforgery>();
         await antiforgery.ValidateRequestAsync(context).ConfigureAwait(false);
-
-        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
     }
-    finally
+    catch (AntiforgeryValidationException)
     {
-        context.Response.Redirect("/login");
+        return Results.BadRequest("Invalid antiforgery token.");
     }
-}).RequireAuthorization();
+
+    try
+    {
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+        context.Response.Redirect("/login");
+        return Results.Empty;
+    }
+    catch
+    {
+        return Results.Problem("Logout failed.", statusCode: StatusCodes.Status500InternalServerError);
+    }
+}).RequireAuthorization().WithOrder(-1);
 
 app.MapGet("/auth/callback", async (HttpContext context, IAuthService auth) =>
 {
@@ -89,6 +126,14 @@ app.MapGet("/auth/callback", async (HttpContext context, IAuthService auth) =>
     if (string.IsNullOrWhiteSpace(code))
     {
         context.Response.Redirect("/login?error=" + Uri.EscapeDataString("missing_code"));
+        return;
+    }
+
+    var state = context.Request.Query["state"].ToString();
+    var stateOk = await auth.ValidateStateAsync(context, state, context.RequestAborted).ConfigureAwait(false);
+    if (!stateOk)
+    {
+        context.Response.Redirect("/login?error=" + Uri.EscapeDataString("invalid_state"));
         return;
     }
 
@@ -113,7 +158,7 @@ app.MapGet("/auth/callback", async (HttpContext context, IAuthService auth) =>
     if (!IsLocalUrl(returnUrl))
         returnUrl = "/";
     context.Response.Redirect(returnUrl);
-}).AllowAnonymous();
+}).AllowAnonymous().WithOrder(-1);
 
 static bool IsLocalUrl(string? url)
 {

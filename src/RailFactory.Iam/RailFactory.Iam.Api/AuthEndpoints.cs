@@ -11,16 +11,30 @@ namespace RailFactory.Iam.Api;
 
 public static class AuthEndpoints
 {
+    private const string FrontendCallbackStateCookieName = "rf_login_state";
+
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/auth");
 
         // Redirect flow: GET /auth/google -> Google -> GET /auth/google/callback
-        group.MapGet("/google", async (IGoogleAuthProvider googleAuth, IOptions<GoogleAuthOptions> googleOptions, IOAuthStateStore stateStore) =>
+        group.MapGet("/google", async (HttpContext context, IGoogleAuthProvider googleAuth, IOptions<GoogleAuthOptions> googleOptions, IOAuthStateStore stateStore) =>
         {
             var opts = googleOptions.Value;
             if (string.IsNullOrEmpty(opts.ClientId) || string.IsNullOrEmpty(opts.RedirectUri))
                 return Results.BadRequest("Google OAuth is not configured (ClientId, RedirectUri).");
+
+            // Frontend CSRF protection: bind the callback to the same browser session.
+            var frontendState = Guid.NewGuid().ToString("N");
+            context.Response.Cookies.Append(FrontendCallbackStateCookieName, frontendState, new CookieOptions
+            {
+                Path = "/",
+                HttpOnly = true,
+                Secure = context.Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                IsEssential = true,
+                MaxAge = TimeSpan.FromMinutes(10)
+            });
 
             var state = Guid.NewGuid().ToString("N");
             var nonce = Guid.NewGuid().ToString("N");
@@ -74,7 +88,15 @@ public static class AuthEndpoints
             // Professional flow: do not send tokens to the browser. Generate one-time code and let frontend exchange server-to-server.
             var exchangeCode = Guid.NewGuid().ToString("N");
             await authCodeStore.StoreAsync(exchangeCode, idToken, TimeSpan.FromMinutes(1), ct).ConfigureAwait(false);
-            return Results.Redirect(frontendRedirectUri + "?code=" + Uri.EscapeDataString(exchangeCode));
+
+            var frontendState = context.Request.Cookies[FrontendCallbackStateCookieName];
+            if (string.IsNullOrWhiteSpace(frontendState))
+                return Results.Redirect(frontendRedirectUri + "?error=invalid_state");
+
+            return Results.Redirect(
+                frontendRedirectUri
+                + "?code=" + Uri.EscapeDataString(exchangeCode)
+                + "&state=" + Uri.EscapeDataString(frontendState));
         });
 
         group.MapPost("/google", async ([FromBody] GoogleLoginRequest request, IUserApplicationService userService, CancellationToken ct) =>

@@ -1,37 +1,31 @@
-using Microsoft.Extensions.Caching.Distributed;
 using RailFactory.Iam.Application.Ports;
 using StackExchange.Redis;
 
 namespace RailFactory.Iam.Infrastructure.Persistence;
 
-public sealed class DistributedCacheAuthCodeStore(IDistributedCache cache, IConnectionMultiplexer? redis = null) : IAuthCodeStore
+public sealed class DistributedCacheAuthCodeStore(IConnectionMultiplexer redis) : IAuthCodeStore
 {
     private const string KeyPrefix = "auth_code:";
 
     public Task StoreAsync(string code, string idToken, TimeSpan ttl, CancellationToken ct = default)
     {
+        if (redis is null)
+            throw new InvalidOperationException("Redis is required for auth code storage.");
+
         var key = KeyPrefix + code;
-        return cache.SetStringAsync(key, idToken, new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = ttl
-        }, ct);
+        var db = redis.GetDatabase();
+        return db.StringSetAsync(key, idToken, ttl);
     }
 
     public async Task<string?> ConsumeAsync(string code, CancellationToken ct = default)
     {
-        var key = KeyPrefix + code;
-        if (redis is not null)
-        {
-            var db = redis.GetDatabase();
-            var value = await db.StringGetDeleteAsync(key).ConfigureAwait(false);
-            return value.HasValue ? value.ToString() : null;
-        }
+        if (redis is null)
+            throw new InvalidOperationException("Redis is required for auth code consumption.");
 
-        var token = await cache.GetStringAsync(key, ct).ConfigureAwait(false);
-        if (string.IsNullOrEmpty(token))
-            return null;
-        await cache.RemoveAsync(key, ct).ConfigureAwait(false);
-        return token;
+        var key = KeyPrefix + code;
+        var db = redis.GetDatabase();
+        var value = await db.StringGetDeleteAsync(key).ConfigureAwait(false);
+        return value.HasValue ? value.ToString() : null;
     }
 }
 

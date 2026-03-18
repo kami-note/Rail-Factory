@@ -1,12 +1,14 @@
 using System.Collections.Concurrent;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
 namespace RailFactory.Frontend.Security;
 
 public sealed class DevAuthService : IAuthService
 {
+    private const string CallbackStateCookieName = "rf_login_state";
     private static readonly ConcurrentDictionary<string, UserRecord> Users = new(StringComparer.OrdinalIgnoreCase);
     private static readonly PasswordHasher<UserRecord> Hasher = new();
 
@@ -45,6 +47,29 @@ public sealed class DevAuthService : IAuthService
             return Task.FromResult(AuthResult.Fail("Invalid email or password."));
 
         return Task.FromResult(AuthResult.Ok(ToPrincipal(record)));
+    }
+
+    public Task<bool> ValidateStateAsync(HttpContext context, string? state, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(state))
+            return Task.FromResult(false);
+
+        if (!context.Request.Cookies.TryGetValue(CallbackStateCookieName, out var expected) || string.IsNullOrWhiteSpace(expected))
+            return Task.FromResult(false);
+
+        var ok = string.Equals(expected, state, StringComparison.Ordinal);
+        if (ok)
+        {
+            context.Response.Cookies.Delete(CallbackStateCookieName, new CookieOptions
+            {
+                Path = "/",
+                Secure = context.Request.IsHttps,
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax
+            });
+        }
+
+        return Task.FromResult(ok);
     }
 
     public Task<AuthResult> ExchangeGoogleAuthCodeAsync(string code, CancellationToken cancellationToken)

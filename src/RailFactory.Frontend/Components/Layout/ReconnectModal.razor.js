@@ -14,7 +14,7 @@ function handleReconnectStateChanged(event) {
     } else if (event.detail.state === "hide") {
         reconnectModal.close();
     } else if (event.detail.state === "failed") {
-        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible, { once: true });
+        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
     } else if (event.detail.state === "rejected") {
         location.reload();
     }
@@ -29,7 +29,7 @@ async function retry() {
         const successful = await Blazor.reconnect();
         if (successful) {
             reconnectModal.close();
-            return;
+            return true;
         }
         if (!successful) {
             // We have been able to reach the server, but the circuit is no longer available.
@@ -37,14 +37,18 @@ async function retry() {
             const resumeSuccessful = await Blazor.resumeCircuit();
             if (!resumeSuccessful) {
                 location.reload();
+                return false;
             } else {
                 reconnectModal.close();
+                return true;
             }
         }
     } catch (err) {
         // We got an exception, server is currently unavailable
-        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible, { once: true });
+        document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
     }
+
+    return false;
 }
 
 async function resume() {
@@ -63,6 +67,9 @@ async function resume() {
 
 async function retryWhenDocumentBecomesVisible() {
     if (document.visibilityState === "visible") {
-        await retry();
+        const succeeded = await retry();
+        if (succeeded) {
+            document.removeEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
+        }
     }
 }

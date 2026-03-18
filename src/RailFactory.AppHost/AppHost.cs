@@ -45,20 +45,19 @@ var iam = builder.AddProject<Projects.RailFactory_Iam_Api>("identity-access-mana
     .WaitFor(iamDb);
 
 // -----------------------------------------------------------------------------
-// Frontend (Blazor)
+// Gateway (single entry point for backend; frontend reaches microservices via Gateway)
+// -----------------------------------------------------------------------------
+
+var gateway = builder.AddProject<Projects.RailFactory_Gateway>("gateway")
+    .WithReference(iam)
+    .WaitFor(iam);
+
+// -----------------------------------------------------------------------------
+// Frontend (Blazor) — public entry; ngrok tunnels here; frontend calls backend via Gateway
 // -----------------------------------------------------------------------------
 
 var frontend = builder.AddProject<Projects.RailFactory_Frontend>("frontend")
-    .WithReference(iam);
-
-// -----------------------------------------------------------------------------
-// Gateway (single entry point)
-// -----------------------------------------------------------------------------
-
-builder.AddProject<Projects.RailFactory_Gateway>("gateway")
-    .WithReference(iam)
-    .WithReference(frontend)
-    .WaitFor(iam)
-    .WaitFor(frontend);
+    .WithReference(gateway)
+    .WithHttpEndpoint(port: 5082, name: "ngrok");
 
 builder.Build().Run();

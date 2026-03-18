@@ -1,23 +1,22 @@
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using RailFactory.Frontend.Options;
 
 namespace RailFactory.Frontend.Security;
 
 public sealed class IamAuthService(
     IHttpClientFactory httpClientFactory,
-    IConfiguration configuration,
     IDistributedCache cache,
     ILogger<IamAuthService> logger) : IAuthService
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
-    private const string CallbackStateCookieName = "rf_login_state";
+    private const string CallbackStateCookieName = AuthConstants.CallbackStateCookieName;
+    internal const string CacheKeyPrefix = "iam_session:";
 
     public Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
         => Task.FromResult(AuthResult.Fail("Registration is handled by Google sign-in in IAM."));
@@ -55,10 +54,10 @@ public sealed class IamAuthService(
             if (string.IsNullOrWhiteSpace(code))
                 return AuthResult.Fail("Missing code.");
 
-            var client = CreateIamClient();
+            var client = httpClientFactory.CreateClient(GatewayServiceCollectionExtensions.GatewayHttpClientName);
 
             using var content = new StringContent(JsonSerializer.Serialize(new { code }, Json), Encoding.UTF8, "application/json");
-            using var response = await client.PostAsync("/auth/exchange", content, cancellationToken).ConfigureAwait(false);
+            using var response = await client.PostAsync(AuthConstants.IamExchangePath, content, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 return AuthResult.Fail("Invalid or expired login code.");
             if (!response.IsSuccessStatusCode)
@@ -71,7 +70,7 @@ public sealed class IamAuthService(
                 return AuthResult.Fail("Invalid IAM exchange response (missing email).");
 
             var sessionId = Guid.NewGuid().ToString("N");
-            await cache.SetStringAsync($"iam_session:{sessionId}", exchange.IdToken, new DistributedCacheEntryOptions
+            await cache.SetStringAsync(IamAuthService.CacheKeyPrefix + sessionId, exchange.IdToken, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(8)
             }, cancellationToken).ConfigureAwait(false);
@@ -92,25 +91,6 @@ public sealed class IamAuthService(
             logger.LogError(ex, "IAM exchange error while exchanging one-time auth code.");
             return AuthResult.Fail("IAM exchange error.");
         }
-    }
-
-    private HttpClient CreateIamClient()
-    {
-        var baseUrl =
-            // Aspire service discovery (normalized)
-            configuration["services:identity-access-management:https:0"]
-            ?? configuration["services:identity-access-management:http:0"]
-            // Aspire service discovery (raw env var key lookup)
-            ?? configuration["services__identity-access-management__https__0"]
-            ?? configuration["services__identity-access-management__http__0"]
-            // Aspire reference aliases
-            ?? configuration["IDENTITY_ACCESS_MANAGEMENT_HTTPS"]
-            ?? configuration["IDENTITY_ACCESS_MANAGEMENT_HTTP"]
-            ?? throw new InvalidOperationException("IAM base URL not configured (missing Aspire service discovery env vars).");
-
-        var client = httpClientFactory.CreateClient(nameof(IamAuthService));
-        client.BaseAddress = new Uri(baseUrl, UriKind.Absolute);
-        return client;
     }
 
     private static ClaimsPrincipal ToPrincipal(UserDto me, string sessionId)
